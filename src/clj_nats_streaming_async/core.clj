@@ -4,7 +4,7 @@
             [clojure.edn :as edn]
             [manifold.stream :as s]
             [clj-nats-async.core :as nats])
-  (:import [io.nats.streaming StreamingConnectionFactory StreamingConnection MessageHandler Message AckHandler]))
+  (:import [io.nats.streaming StreamingConnectionFactory StreamingConnection MessageHandler Message AckHandler SubscriptionOptions$Builder]))
 
 (defn create-nats-streaming
   "creates a Nats Streaming connection, returning a Nats object
@@ -31,15 +31,21 @@
               "UTF-8"))))
 
 (defn ^:private create-nats-subscription
-  [nats subject {:keys [queue] :as opts} stream]
-  (.subscribe
-   nats
-   subject
-   queue
-   (reify
-     MessageHandler
-     (onMessage [_ m]
-       (s/put! stream (map->NatsMessage {:nats-message m}))))))
+  [nats subject {:keys [queue durable-name] :as opts} stream]
+  (let [subscription-options-builder (SubscriptionOptions$Builder.)]
+    (if (not (nil? durable-name))
+      (-> subscription-options-builder
+          (.durableName durable-name)))
+    (.subscribe
+     nats
+     subject
+     queue
+     (reify
+       MessageHandler
+       (onMessage [_ m]
+         (s/put! stream (map->NatsMessage {:nats-message m}))))
+     (-> subscription-options-builder
+         (.build)))))
 
 (defn subscribe
   "returns a a Manifold source-only stream of INatsMessages from a NATS subject.
