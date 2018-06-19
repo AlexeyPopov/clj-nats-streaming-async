@@ -4,7 +4,7 @@
             [clojure.edn :as edn]
             [manifold.stream :as s]
             [clj-nats-async.core :as nats])
-  (:import [io.nats.streaming StreamingConnectionFactory StreamingConnection MessageHandler Message]))
+  (:import [io.nats.streaming StreamingConnectionFactory StreamingConnection MessageHandler Message AckHandler]))
 
 (defn create-nats-streaming
   "creates a Nats Streaming connection, returning a Nats object
@@ -65,7 +65,16 @@
    (let [is-subject-fn? (or (var? subject-or-fn) (fn? subject-or-fn))
          subject (if is-subject-fn? (subject-or-fn body) subject-or-fn)]
      (if subject
-       (.publish nats subject (.getBytes (pr-str body) "UTF-8"))
+       (.publish
+        nats
+        subject
+        (.getBytes (pr-str body) "UTF-8")
+        (reify
+          AckHandler
+          (onAck [_ guid err]
+            (if (not (nil? err))
+              (log/error (str "Error publishing msg id " guid ": " (-> err
+                                                                      (.getMessage))))))))
        (log/warn (ex-info
                   (str "no subject "
                        (if is-subject-fn? "extracted" "given"))
