@@ -30,12 +30,14 @@
      (String. (.getData nats-message)
               "UTF-8"))))
 
-(defn ^:private create-nats-subscription
+(defn- create-nats-subscription
   [nats subject {:keys [queue durable-name] :as opts} stream]
   (let [subscription-options-builder (SubscriptionOptions$Builder.)]
     (if (not (nil? durable-name))
       (-> subscription-options-builder
           (.durableName durable-name)))
+    (.. subscription-options-builder
+        (deliverAllAvailable))
     (.subscribe
      nats
      subject
@@ -47,21 +49,9 @@
      (-> subscription-options-builder
          (.build)))))
 
-(defn subscribe
-  "returns a a Manifold source-only stream of INatsMessages from a NATS subject.
-   close the stream to dispose of the subscription"
-  ([nats subject] (subscribe nats subject {}))
-  ([nats subject opts]
-   (let [stream (s/stream)
-         source (s/source-only stream)
-         nats-subscription (create-nats-subscription nats subject opts stream)]
-     (s/on-closed stream
-                  (fn []
-                    (log/info "closing NATS subscription: " subject)
-                    (.close nats-subscription)))
-     source)))
 
-(defn publish
+
+(defn- publish
   "publish a message
   - subject-or-fn : either a string specifying a fixed subject or a
                      (fn [item] ...) which extracts a subject from an item"
@@ -75,7 +65,7 @@
         nats
         subject
         (.getBytes (pr-str body) "UTF-8")
-        (reify ;; TODO Возможно стоит передвавать cb контролирующий выполнени отправки
+        (reify ;; TODO Возможно стоит передвавать cb контролирующий выполнение отправки
           AckHandler
           (onAck [_ guid err]
             (if (not (nil? err))
@@ -85,6 +75,20 @@
                   (str "no subject "
                        (if is-subject-fn? "extracted" "given"))
                   {:body body}))))))
+
+(defn subscriber
+  "returns a a Manifold source-only stream of INatsMessages from a NATS subject.
+   close the stream to dispose of the subscription"
+  ([nats subject] (subscriber nats subject {}))
+  ([nats subject opts]
+   (let [stream (s/stream)
+         source (s/source-only stream)
+         nats-subscription (create-nats-subscription nats subject opts stream)]
+     (s/on-closed stream
+                  (fn []
+                    (log/info "closing NATS subscription: " subject " opts " opts)
+                    (.unsubscribe nats-subscription))) ;; TODO В данном месте есть проблема, последние версии NATS Server не возвращают ответ об успехе операции и тут возникает NullPointerException   shaded.nats.com.google.protobuf.AbstractParser.parseFrom (AbstractParser.java:185) https://github.com/nats-io/java-nats-streaming/blob/64fe3990699635100548154b3affa16c79d38a06/src/main/java/io/nats/streaming/SubscriptionImpl.java#L178
+     source)))
 
 (defn publisher
   "returns a Manifold sink-only stream which publishes items put on the stream
