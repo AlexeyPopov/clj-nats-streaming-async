@@ -75,7 +75,7 @@
         nats
         subject
         (.getBytes (pr-str body) "UTF-8")
-        (reify
+        (reify ;; TODO Возможно стоит передвавать cb контролирующий выполнени отправки
           AckHandler
           (onAck [_ guid err]
             (if (not (nil? err))
