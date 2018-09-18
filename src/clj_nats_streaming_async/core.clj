@@ -66,8 +66,7 @@
        (onMessage [_ m]
          (cb (msg-body (map->NatsMessage {:nats-message m})))))
      (-> subscription-options-builder
-         (.build))))
-  nil)
+         (.build)))))
 
 
 (defn- publish

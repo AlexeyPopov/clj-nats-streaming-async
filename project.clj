@@ -1,4 +1,4 @@
-(defproject alexeypopov/clj-nats-streaming-async "0.0.4"
+(defproject alexeypopov/clj-nats-streaming-async "0.0.5"
   :description "an async client for NATS Streaming, wrapping java-nats-streaming client"
   :url "https://github.com/AlexeyPopov/clj-nats-async"
   :license {:name "Apache License, Version 2.0"
