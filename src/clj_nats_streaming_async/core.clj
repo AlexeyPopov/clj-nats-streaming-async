@@ -33,7 +33,7 @@
 (defn- create-nats-subscription
   [nats subject {:keys [queue durable-name] :as opts} stream]
   (let [subscription-options-builder (SubscriptionOptions$Builder.)]
-    (if (not (nil? durable-name))
+    (if-not (nil? durable-name)
       (-> subscription-options-builder
           (.durableName durable-name)))
     (.. subscription-options-builder
@@ -50,11 +50,14 @@
          (.build)))))
 
 (defn create-nats-subscription-callback
-  [nats subject {:keys [queue durable-name] :as opts} cb]
+  [nats subject {:keys [queue durable-name max-in-flight] :as opts} cb]
   (let [subscription-options-builder (SubscriptionOptions$Builder.)]
-    (if (not (nil? durable-name))
+    (if-not (nil? durable-name)
       (-> subscription-options-builder
           (.durableName durable-name)))
+    (if-not (nil? max-in-flight)
+      (-> subscription-options-builder
+          (.maxInFlight max-in-flight)))
     (.. subscription-options-builder
         (deliverAllAvailable))
     (.subscribe
@@ -88,7 +91,7 @@
           (onAck [_ guid err]
             (if (not (nil? err))
               (log/error (str "Error publishing msg id " guid ": " (-> err
-                                                                      (.getMessage))))))))
+                                                                       (.getMessage))))))))
        (log/warn (ex-info
                   (str "no subject "
                        (if is-subject-fn? "extracted" "given"))
