@@ -49,6 +49,25 @@
      (-> subscription-options-builder
          (.build)))))
 
+(defn create-nats-subscription-callback
+  [nats subject {:keys [queue durable-name] :as opts} cb]
+  (let [subscription-options-builder (SubscriptionOptions$Builder.)]
+    (if (not (nil? durable-name))
+      (-> subscription-options-builder
+          (.durableName durable-name)))
+    (.. subscription-options-builder
+        (deliverAllAvailable))
+    (.subscribe
+     nats
+     subject
+     queue
+     (reify
+       MessageHandler
+       (onMessage [_ m]
+         (cb (msg-body (map->NatsMessage {:nats-message m})))))
+     (-> subscription-options-builder
+         (.build))))
+  nil)
 
 
 (defn- publish
