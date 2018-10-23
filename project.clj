@@ -1,11 +1,11 @@
-(defproject alexeypopov/clj-nats-streaming-async "0.0.6"
+(defproject alexeypopov/clj-nats-streaming-async "0.0.8-SNAPSHOT"
   :description "an async client for NATS Streaming, wrapping java-nats-streaming client"
   :url "https://github.com/AlexeyPopov/clj-nats-async"
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
 
-  :dependencies [[alexeypopov/clj-nats-async "1.3.0"]
-                 [alexeypopov/java-nats-streaming "0.5.0-1"]
+  :dependencies [[io.nats/jnats "2.1.2"]
+                 [io.nats/java-nats-streaming "2.1.2" :exclusions [io.nats/jnats]]
                  [manifold "0.1.8"]]
 
   :profiles {:provided {:dependencies [[org.clojure/clojure "1.9.0"]]}})
