@@ -8,4 +8,4 @@
                  [io.nats/java-nats-streaming "2.1.2" :exclusions [io.nats/jnats]]
                  [manifold "0.1.8"]]
 
-  :profiles {:provided {:dependencies [[org.clojure/clojure "1.9.0"]]}})
+  :profiles {:provided {:dependencies [[org.clojure/clojure "1.10.0-RC1"]]}})
