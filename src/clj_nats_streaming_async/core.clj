@@ -2,8 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.tools.logging :as log]
             [clojure.edn :as edn]
-            [manifold.stream :as s]
-            [clj-nats-async.core :as nats])
+            [manifold.stream :as s])
   (:import [io.nats.streaming StreamingConnectionFactory StreamingConnection MessageHandler Message AckHandler SubscriptionOptions$Builder]))
 
 (defn create-nats-streaming
